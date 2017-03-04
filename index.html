@@ -1,0 +1,289 @@
+<html>
+
+<head>
+  <title>Scott's Design Challenge Page</title>
+  <link rel="stylesheet" href="bower_components/PACE/themes/blue/pace-theme-big-counter.css" />
+  <link rel='stylesheet' href="bower_components/cartodb.js/themes/css/cartodb.css"/>
+  <link rel='stylesheet' href="bower_components/bootstrap/dist/css/bootstrap.min.css" />
+  <link rel='stylesheet' href="bower_components/bootstrap/dist/css/bootstrap-theme.min.css" />
+</head>
+<style>
+  html, body{
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    margin:0px;
+    padding:0px;
+    background-color: black;
+    color: white;
+  }
+
+
+
+  #map{
+    height: 90%;
+    /*width: 75%;*/
+    overflow: hidden;
+    margin:0px;
+    padding: 0px;
+  }
+  #panel{
+    height: 100%;
+    /*width: 75%;*/
+    background-color:black;
+  }
+
+  #sliderControl{
+    height: 10%;
+    background-color: black;
+    padding: 5%;
+  }
+
+  .hightlight{
+    color: red!important;
+  }
+</style>
+<body>
+  <div class='row'>
+    <div class='col-xs-7'>
+        <div id='map'>
+
+        </div>
+
+        <div id='sliderControl'>
+          <input type='range' min='1' max='60' value='5' class='col-xs-12' id='theSlider'/><br  />
+          <label id='slider-label'><b class='slider-dynamic'>5</b> Minutes Walking</label>
+      </div>
+    </div>
+
+    <div id='panel' class='col-xs-5'>
+
+      <h4 class='page-header'>Within <b class='slider-dynamic text-danger'>5</b> Minutes of <b class='address-dynamic text-danger'></b></h4>
+
+      <label>Number of Parcels: </label><b class='text-success' id='numParcels-dynamic'></b><br  />
+      <label>Number of Residential Parcels: </label><b class='text-success' id='resParcels-dynamic'></b><br  />
+      <label>Number of Single Family Parcels: </label><b class='text-success' id='sfParcels-dynamic'></b><br  />
+      <label>Number of Vacant Parcels: </label><b class='text-success' id='vParcels-dynamic'></b><br  />
+      <label>Number of Commericial Parcels: </label><b class='text-success' id='cParcels-dynamic'></b><br  />
+      <label>Number of Industrial Parcels: </label><b class='text-success' id='iParcels-dynamic'></b><br  />
+      <label>Number of Agricultural Parcels: </label><b class='text-success' id='aParcels-dynamic'></b><br  />
+      <hr />
+      <label>Mean Parcel Tax Value</label><b class='text-success' id='taxParcels-dynamic'></b><br  />
+      <label>Mean Parcel Size</label><b class='text-success' id='areaParcels-dynamic'></b><br  />
+
+    </div>
+
+
+  </div>
+
+  <script src="bower_components/jquery/dist/jquery.min.js"></script>
+  <script src="bower_components/PACE/pace.js"></script>
+  <script src="bower_components/cartodb.js/cartodb.js"></script>
+  <script src='bower_components/d3/d3.min.js'></script>
+  <script src='bower_components/bootstrap/dist/js/bootstrap.min.js'></script>
+  <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
+  <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+
+  <script>
+  var f = "./centroids.json";
+  var isochronHost = "http://matrix.mapzen.com/isochrone?"
+  var mapzen_key = "mapzen-RsgxFds";
+  var isoTime = 5;
+  var isochronLayer;
+  var parcelCentroids;
+  var parcelGeojson;
+  var isochroneOptions = {
+    locations: [{
+      lat:0,
+      lon: 0
+    }],
+    costing: 'pedestrian',
+    contours: [
+      {
+       time: 5,
+      color: 'red'}
+    ]
+  }
+
+  var id = "walk_time_5mins";
+
+  var currentLat = null;
+  var currentLng = null;
+
+  var geojsonMarkerOptions = {
+    radius: 3,
+    fillColor: "#36454F",
+    color: "#000",
+    weight: 0.5,
+    opacity: 0.5,
+    fillOpacity: 0.5
+};
+
+var isoMarkerOptions = {
+    "color": "darkred",
+    "fillColor": "red",
+    "fillOpacity": 0.25,
+    "weight": 1,
+    "opacity": 1
+};
+
+
+//map setup
+map = L.map('map', {  zoomControl: false, }).setView([43.0731, -89.5012], 12);
+
+L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+
+//empty on init
+
+  $(document).ready(function(){
+      initialize()
+  })
+
+
+  function initialize(){
+
+    isochronLayer = L.geoJson(null, {
+      style: isoMarkerOptions
+    }).addTo(map);
+    parcelCentroids = L.geoJson(null, {
+      pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, geojsonMarkerOptions);
+      },
+      onEachFeature: function(feature, layer){
+        layer.on('click', function(e){
+          coords = feature.geometry.coordinates
+          var lat = coords[1];
+          var lng = coords[0];
+          var time = isoTime;
+          var callback = onIsoChronReceipt;
+          getIsoChronFromPos(lat, lng, time, callback);
+          changeAddress(feature);
+        })
+      }
+    }).addTo(map);
+
+    $.getJSON(f, function(data){
+      parcelCentroids.clearLayers();
+      parcelCentroids.addData(data);
+      parcelGeojson = data;
+    })
+
+    function changeAddress(feature){
+      address = feature.properties.Address;
+      $(".address-dynamic").text(address)
+    }
+
+
+    function getIsoChronFromPos(lat, lng, time, callback){
+        currentLat = lat;
+        currentLng = lng;
+        requestOptions = isochroneOptions;
+        requestOptions.locations[0].lat = lat;
+        requestOptions.locations[0].lon = lng;
+        requestOptions.contours[0].time = time
+
+        requestOptions = JSON.stringify(requestOptions);
+
+        var requestEndpoint = isochronHost + "json=" + requestOptions + "&id=walk_time_5mins&api_key=" + mapzen_key + "&polygons=true"
+
+
+        $.getJSON(requestEndpoint, function(data){
+          callback(data)
+        })
+    }
+
+    function onIsoChronReceipt(isoGeojson){
+      displayIsoLines(isoGeojson);
+      pointsWithin = calcWithinIsoLines(isoGeojson, parcelGeojson);
+      stats = analyzeWithinIsoLines(pointsWithin)
+      displayStats(stats);
+    }
+
+    function displayIsoLines(isoGeojson){
+      isochronLayer.clearLayers();
+      isochronLayer.addData(isoGeojson);
+    }
+
+    function calcWithinIsoLines(isoGeojson, points){
+      var pointsWithin = turf.within(points, isoGeojson);
+      return pointsWithin;
+    }
+
+    function analyzeWithinIsoLines(pointsWithin){
+      stats = {
+        vacant: 0,
+        singleFamily: 0,
+        residential: 0,
+        total: 0,
+        agricultural: 0,
+        commercial: 0,
+        industrial: 0,
+        meanTotalTax: 0,
+        meanParcelSize: 0
+      }
+      for (var i = 0; i < pointsWithin.features.length; i++){
+        point = pointsWithin.features[i];
+        props = point.properties
+        stats.total += 1;
+        c = props.PropertyClass;
+        u = props.PropertyUse;
+
+        if (c == "Residential"){
+          stats.residential += 1;
+        }
+        if (c == "Commercial"){
+          stats.commercial += 1
+        }
+        if (c == "Industrial"){
+          stats.industrial += 1
+        }
+        if (c == "Agricultural"){
+          stats.agricultural += 1;
+        }
+        if (u == "Vacant"){
+          stats.vacant += 1
+        }
+        if (u == "Single Family"){
+          stats.singleFamily += 1
+        }
+        stats.meanParcelSize += props.SHAPESTArea;
+        stats.meanTotalTax += props.TotalTaxes;
+      } //end loop
+
+      stats.meanParcelSize = stats.meanParcelSize / stats.total;
+      stats.meanTotalTax = stats.meanTotalTax  / stats.total;
+      return stats;
+    }
+
+    function displayStats(stats){
+      $("#numParcels-dynamic").text(stats.total);
+      $("#resParcels-dynamic").text(stats.residential);
+      $("#sfParcels-dynamic").text(stats.singleFamily);
+      $("#vParcels-dynamic").text(stats.vacant);
+      $("#cParcels-dynamic").text(stats.commercial);
+      $("#iParcels-dynamic").text(stats.industrial);
+      $("#aParcels-dynamic").text(stats.agricultural);
+      $("#taxParcels-dynamic").text("$" + Math.round(stats.meanTotalTax).toLocaleString('en-US'));
+      $("#areaParcels-dynamic").html(Math.round(stats.meanParcelSize).toLocaleString('en-US') + " m<sup>2</sup>")
+    }
+
+
+    $("#theSlider").on('change', function(e){
+      var val = $(this).val();
+      console.log(val)
+      $(".slider-dynamic").text(val);
+      isoTime = val;
+      if ((currentLat != null) || (currentLng != null)){
+          getIsoChronFromPos(currentLat, currentLng, isoTime, onIsoChronReceipt);
+      }
+    })
+}//end init
+
+
+
+
+  </script>
+</body>
+</html>

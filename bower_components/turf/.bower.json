@@ -1,0 +1,15 @@
+{
+  "name": "turf",
+  "homepage": "https://github.com/morganherlocker/turf",
+  "version": "3.11.7",
+  "_release": "3.11.7",
+  "_resolution": {
+    "type": "version",
+    "tag": "v3.11.7",
+    "commit": "3003cd0603ab28a95c14c5a6424e678c5a80957b"
+  },
+  "_source": "https://github.com/morganherlocker/turf.git",
+  "_target": "^3.11.7",
+  "_originalSource": "turf",
+  "_direct": true
+}

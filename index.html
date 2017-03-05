@@ -70,6 +70,8 @@
       <hr />
       <label>Mean Parcel Tax Value</label><b class='text-success' id='taxParcels-dynamic'></b><br  />
       <label>Mean Parcel Size</label><b class='text-success' id='areaParcels-dynamic'></b><br  />
+      <hr />
+      <label>Bus Stops</label><b class='text-success' id='busParcels-dynamic'></b><br  />
 
     </div>
 
@@ -92,6 +94,8 @@
   var isochronLayer;
   var parcelCentroids;
   var parcelGeojson;
+  var busStops;
+  var busStopsLayer;
   var isochroneOptions = {
     locations: [{
       lat:0,
@@ -147,6 +151,13 @@ L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
     isochronLayer = L.geoJson(null, {
       style: isoMarkerOptions
     }).addTo(map);
+
+    // busStopsLayer = L.geoJson(null, {
+    //   pointToLayer: function (feature, latlng) {
+    //       return L.circleMarker(latlng, geojsonMarkerOptions);
+    //   }
+    // }).addTo(map);
+
     parcelCentroids = L.geoJson(null, {
       pointToLayer: function (feature, latlng) {
           return L.circleMarker(latlng, geojsonMarkerOptions);
@@ -168,6 +179,10 @@ L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
       parcelCentroids.clearLayers();
       parcelCentroids.addData(data);
       parcelGeojson = data;
+    })
+
+    $.getJSON("http://data-cityofmadison.opendata.arcgis.com/datasets/72f376c15a0a4dbe873b82042de41a6e_3.geojson", function(data){
+      busStops = data;
     })
 
     function changeAddress(feature){
@@ -197,7 +212,8 @@ L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
     function onIsoChronReceipt(isoGeojson){
       displayIsoLines(isoGeojson);
       pointsWithin = calcWithinIsoLines(isoGeojson, parcelGeojson);
-      stats = analyzeWithinIsoLines(pointsWithin)
+      busStopsWithin = calcWithinIsoLines(isoGeojson, busStops);
+      stats = analyzeWithinIsoLines(pointsWithin, busStopsWithin)
       displayStats(stats);
     }
 
@@ -211,7 +227,7 @@ L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
       return pointsWithin;
     }
 
-    function analyzeWithinIsoLines(pointsWithin){
+    function analyzeWithinIsoLines(pointsWithin, busStops){
       stats = {
         vacant: 0,
         singleFamily: 0,
@@ -221,7 +237,8 @@ L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
         commercial: 0,
         industrial: 0,
         meanTotalTax: 0,
-        meanParcelSize: 0
+        meanParcelSize: 0,
+        busStops: 0
       }
       for (var i = 0; i < pointsWithin.features.length; i++){
         point = pointsWithin.features[i];
@@ -254,6 +271,7 @@ L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
 
       stats.meanParcelSize = stats.meanParcelSize / stats.total;
       stats.meanTotalTax = stats.meanTotalTax  / stats.total;
+      stats.busStops = busStops.features.length;
       return stats;
     }
 
@@ -267,7 +285,8 @@ L.tileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
       $("#aParcels-dynamic").text(stats.agricultural);
       $("#taxParcels-dynamic").text("$" + Math.round(stats.meanTotalTax).toLocaleString('en-US'));
       $("#areaParcels-dynamic").html(Math.round(stats.meanParcelSize).toLocaleString('en-US') + " m<sup>2</sup>")
-    }
+      $("#busParcels-dynamic").text(stats.busStops);
+      }
 
 
     $("#theSlider").on('change', function(e){

@@ -58,8 +58,9 @@
 
     <div id='panel' class='col-xs-5'>
 
-      <h4 class='page-header'>Within <b class='slider-dynamic text-danger'>5</b> Minutes of <b class='address-dynamic text-danger'></b></h4>
+      <h2 class='page-header'>Within <b class='slider-dynamic text-danger'>5</b> Minutes of <b class='address-dynamic text-danger'></b></h2>
 
+      <h6 clas='page-header'>Parcels</h6>
       <label>Number of Parcels: </label><b class='text-success' id='numParcels-dynamic'></b><br  />
       <label>Number of Residential Parcels: </label><b class='text-success' id='resParcels-dynamic'></b><br  />
       <label>Number of Single Family Parcels: </label><b class='text-success' id='sfParcels-dynamic'></b><br  />
@@ -67,12 +68,19 @@
       <label>Number of Commericial Parcels: </label><b class='text-success' id='cParcels-dynamic'></b><br  />
       <label>Number of Industrial Parcels: </label><b class='text-success' id='iParcels-dynamic'></b><br  />
       <label>Number of Agricultural Parcels: </label><b class='text-success' id='aParcels-dynamic'></b><br  />
-      <hr />
+      <h6 class='page-header'>Land Value</h6>
       <label>Mean Parcel Tax Value</label><b class='text-success' id='taxParcels-dynamic'></b><br  />
       <label>Mean Parcel Size</label><b class='text-success' id='areaParcels-dynamic'></b><br  />
-      <hr />
+      <h6 class='page-header'>Public Infrastructure</h6>
       <label>Bus Stops</label><b class='text-success' id='busParcels-dynamic'></b><br  />
+      <label>Police Stations</label><b class='text-success' id='police-dynamic'></b><br  />
+      <label>Fire Stations</label><b class='text-success' id='fire-dynamic'></b><br  />
+      <label>Libraries</label><b class='text-success' id='libraries-dynamic'></b><br  />
+      <label>Water Main Breaks</label><b class='text-success' id='water-dynamic'></b><br  />
+      <label>Bike Share</label><b class='text-success' id='bike-dynamic'></b><br  />
 
+      <h6 class='page-header'>Demographics</h6>
+      <i>Not done yet...</i>
     </div>
 
 
@@ -164,6 +172,7 @@ map.on('click', function(e){
   currentLng = lng
   method = "pedestrian";
   requestData(lat, lng, isoTime, method);
+  getAddress(lat, lng);
 })
 
 function requestData(lat, lng, time, method){
@@ -174,11 +183,9 @@ function requestData(lat, lng, time, method){
 }
 
 function processResponse(data){
-  console.log(data)
   isochronLayer.clearLayers();
   isochronLayer.addData(data);
   displayStats(data.features[0].properties)
-  changeAddress(data.features[0])
 }
 
 function displayStats(stats){
@@ -192,6 +199,11 @@ function displayStats(stats){
   $("#taxParcels-dynamic").text("$" + Math.round(stats.meanTotalTax).toLocaleString('en-US'));
   $("#areaParcels-dynamic").html(Math.round(stats.meanParcelSize).toLocaleString('en-US') + " m<sup>2</sup>")
   $("#busParcels-dynamic").text(stats.busStops);
+  $("#fire-dynamic").text(stats.fireStations);
+  $("#police-dynamic").text(stats.policeStations);
+  $("#water-dynamic").text(stats.waterMainBreaks);
+  $("#libraries-dynamic").text(stats.libraries);
+  $("#bike-dynamic").text(stats.bikeShare);
 }
 
 
@@ -204,12 +216,22 @@ $("#theSlider").on('change', function(e){
     requestData(currentLat, currentLng, isoTime, "pedestrian");
   }
 })
-//
-//
+
+
+function getAddress(lat, lng){
+  host = "https://search.mapzen.com/v1/reverse?api_key=" + mapzen_key
+  host += "&point.lat=" + lat
+  host += "&point.lon=" + lng
+  host += "&size=1"
+  $.getJSON(host, function(data){
+    console.log(data)
+    changeAddress(data.features[0])
+  })
+}
 
 
 function changeAddress(feature){
-  address = feature.properties.Address;
+  address = feature.properties.name;
   $(".address-dynamic").text(address)
 }
 

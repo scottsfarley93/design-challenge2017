@@ -168,7 +168,7 @@ app.get("/execute", function(req, res){
   var longitude = req.query.longitude ;
   var time = req.query.time;
   var method = req.query.method;
-  var layers = req.query.layers || ['busStops'];
+  var layers = req.query.layers || ['busStops', 'fireStations'];
 
   getIsoChronFromPos(latitude, longitude, time, method, onIsoChronReceipt, res, layers)
 

@@ -42,6 +42,10 @@
   .hightlight{
     color: red!important;
   }
+
+  .active{
+    color: red!important;
+  }
 </style>
 <body>
   <div class='row'>
@@ -52,7 +56,10 @@
 
         <div id='sliderControl'>
           <input type='range' min='1' max='60' value='5' class='col-xs-12' id='theSlider'/><br  />
-          <label id='slider-label'><b class='slider-dynamic'>5</b> Minutes Walking</label>
+          <label id='slider-label'><b class='slider-dynamic'>5</b> Minutes of
+              <a class='mode-select active' data-mode='pedestrian'>Walking</a> | <a class='mode-select' data-mode='bicycle'>Biking</a> |
+              <a class='mode-select' data-mode='auto'>Driving</a> | <a class='mode-select' data-mode='multimodal'>Public Transit</a>
+          </label>
       </div>
     </div>
 
@@ -100,25 +107,7 @@
   var mapzen_key = "mapzen-RsgxFds";
   var isoTime = 5;
   var isochronLayer;
-  var parcelCentroids;
-  var parcelGeojson;
-  var busStops;
-  var busStopsLayer;
-  var isochroneOptions = {
-    locations: [{
-      lat:0,
-      lon: 0
-    }],
-    costing: 'pedestrian',
-    contours: [
-      {
-       time: 5,
-      color: 'red'}
-    ]
-  }
-
-  var id = "walk_time_5mins";
-
+  var cost = 'pedestrian';
   var currentLat = null;
   var currentLng = null;
 
@@ -167,14 +156,14 @@ cartodb.createLayer(map,lyr).on('done',function(layer){
 map.on('click', function(e){
   lat = e.latlng.lat
   lng = e.latlng.lng
-  currentLat = lat
-  currentLng = lng
   method = "pedestrian";
   requestData(lat, lng, isoTime, method);
   getAddress(lat, lng);
 })
 
 function requestData(lat, lng, time, method){
+  currentLat = lat
+  currentLng = lng
   request = "http://grad.geography.wisc.edu:4000/execute?latitude="+ lat + "&longitude=" + lng + "&time=" + time + "&method=" + method
   console.log(request);
   $.getJSON(request, function(data){
@@ -213,8 +202,18 @@ $("#theSlider").on('change', function(e){
   console.log(val)
   $(".slider-dynamic").text(val);
   isoTime = val;
-  if ((currentLat != null) || (currentLng != null)){
-    requestData(currentLat, currentLng, isoTime, "pedestrian");
+  if ((currentLat != null) && (currentLng != null)){
+      requestData(currentLat, currentLng, isoTime, cost);
+  }
+})
+
+$(".mode-select").click(function(d){
+  var mode = $(this).data('mode');
+  $(".mode-select").removeClass("active");
+  $(this).addClass('active');
+  cost = mode
+  if ((currentLat != null) && (currentLng != null)){
+      requestData(currentLat, currentLng, isoTime, cost);
   }
 })
 

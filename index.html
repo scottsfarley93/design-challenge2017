@@ -2,7 +2,7 @@
 
 <head>
   <title>Scott's Design Challenge Page</title>
-  <link rel="stylesheet" href="bower_components/PACE/themes/blue/pace-theme-big-counter.css" />
+  <link rel="stylesheet" href="bower_components/PACE/themes/red/pace-theme-center-simple.css" />
   <link rel='stylesheet' href="bower_components/cartodb.js/themes/css/cartodb.css"/>
   <link rel='stylesheet' href="bower_components/bootstrap/dist/css/bootstrap.min.css" />
   <link rel='stylesheet' href="bower_components/bootstrap/dist/css/bootstrap-theme.min.css" />
@@ -175,7 +175,8 @@ map.on('click', function(e){
 })
 
 function requestData(lat, lng, time, method){
-  request = "http://localhost:3000/execute?latitude="+ lat + "&longitude=" + lng + "&time=" + time + "&method=" + method
+  request = "http://grad.geography.wisc.edu:4000/execute?latitude="+ lat + "&longitude=" + lng + "&time=" + time + "&method=" + method
+  console.log(request);
   $.getJSON(request, function(data){
     processResponse(data)
   })

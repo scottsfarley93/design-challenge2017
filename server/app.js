@@ -19,12 +19,11 @@ app.use(cors());
 var querySources = [ //points
   {name: 'busStops', url: "http://data-cityofmadison.opendata.arcgis.com/datasets/72f376c15a0a4dbe873b82042de41a6e_3.geojson"},
   {name: 'fireStations', url: "http://data-cityofmadison.opendata.arcgis.com/datasets/dd8af3de557f483197a9b2b228443d0b_1.geojson"},
-  // {name: 'streetTrees', url: "http://data-cityofmadison.opendata.arcgis.com/datasets/dd8af3de557f483197a9b2b228443d0b_0.geojson"},
-  // {name: 'bikeShare', url: "http://data-cityofmadison.opendata.arcgis.com/datasets/72f376c15a0a4dbe873b82042de41a6e_9.geojson"},
-  // {name: 'policeStations', url:"http://data-cityofmadison.opendata.arcgis.com/datasets/dd8af3de557f483197a9b2b228443d0b_2.geojson"},
-  // {name: 'waterMainBreaks', url:"http://data-cityofmadison.opendata.arcgis.com/datasets/dd8af3de557f483197a9b2b228443d0b_5.geojson"},
-  // {name: 'libraries', url: "http://data-cityofmadison.opendata.arcgis.com/datasets/dd8af3de557f483197a9b2b228443d0b_3.geojson"},
-  // {name: 'transferStations', url: "http://data-cityofmadison.opendata.arcgis.com/datasets/72f376c15a0a4dbe873b82042de41a6e_4.geojson"}
+  {name: 'streetTrees', url: "http://data-cityofmadison.opendata.arcgis.com/datasets/dd8af3de557f483197a9b2b228443d0b_0.geojson"},
+  {name: 'bikeShare', url: "http://data-cityofmadison.opendata.arcgis.com/datasets/72f376c15a0a4dbe873b82042de41a6e_9.geojson"},
+  {name: 'policeStations', url:"http://data-cityofmadison.opendata.arcgis.com/datasets/dd8af3de557f483197a9b2b228443d0b_2.geojson"},
+  {name: 'libraries', url: "http://data-cityofmadison.opendata.arcgis.com/datasets/dd8af3de557f483197a9b2b228443d0b_3.geojson"},
+  {name: 'transferStations', url: "http://data-cityofmadison.opendata.arcgis.com/datasets/72f376c15a0a4dbe873b82042de41a6e_4.geojson"}
 ]
 
 var parcelSource = "./data/centroids_all.geojson";
@@ -168,7 +167,7 @@ app.get("/execute", function(req, res){
   var longitude = req.query.longitude ;
   var time = req.query.time;
   var method = req.query.method;
-  var layers = req.query.layers || ['busStops', 'fireStations'];
+  var layers = req.query.layers || ['busStops', 'fireStations', 'bikeShare', 'policeStations', 'libraries', 'streetTrees'];
 
   getIsoChronFromPos(latitude, longitude, time, method, onIsoChronReceipt, res, layers)
 

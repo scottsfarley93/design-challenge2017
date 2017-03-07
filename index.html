@@ -76,7 +76,6 @@
       <label>Police Stations</label><b class='text-success' id='police-dynamic'></b><br  />
       <label>Fire Stations</label><b class='text-success' id='fire-dynamic'></b><br  />
       <label>Libraries</label><b class='text-success' id='libraries-dynamic'></b><br  />
-      <label>Water Main Breaks</label><b class='text-success' id='water-dynamic'></b><br  />
       <label>Bike Share</label><b class='text-success' id='bike-dynamic'></b><br  />
 
       <h6 class='page-header'>Demographics</h6>
@@ -189,6 +188,7 @@ function processResponse(data){
 }
 
 function displayStats(stats){
+  console.log(stats)
   $("#numParcels-dynamic").text(stats.total);
   $("#resParcels-dynamic").text(stats.residential);
   $("#sfParcels-dynamic").text(stats.singleFamily);
@@ -201,7 +201,7 @@ function displayStats(stats){
   $("#busParcels-dynamic").text(stats.busStops);
   $("#fire-dynamic").text(stats.fireStations);
   $("#police-dynamic").text(stats.policeStations);
-  $("#water-dynamic").text(stats.waterMainBreaks);
+  // $("#water-dynamic").text(stats.waterMainBreaks);
   $("#libraries-dynamic").text(stats.libraries);
   $("#bike-dynamic").text(stats.bikeShare);
 }
